@@ -28,32 +28,33 @@ public class Renderer {
     @NotNull
     public BufferedImage render(@NotNull String text) {
         int width = 0;
-        List<BufferedImage> images = new ArrayList<>();
+        List<Symbol> symbols = new ArrayList<>();
         for (int i = 0; i < text.length(); i++) {
-            char symbol = text.charAt(i);
-            if (symbol == ' ') {
-                images.add(null);
+            char character = text.charAt(i);
+            if (character == ' ') {
+                symbols.add(null);
                 width += font.getSpaceSize();
                 continue;
             }
-            BufferedImage bufferedImage = font.getSymbols().get(symbol);
-            if (bufferedImage == null) continue;
-            width += bufferedImage.getWidth();
-            images.add(bufferedImage);
+            Symbol symbol = font.getSymbols().get(character);
+            if (symbol == null) continue;
+            width += symbol.getWidth();
+            symbols.add(symbol);
             ++width;
         }
         --width;
         System.out.println("Width: " + width);
-        BufferedImage bufferedImage = new BufferedImage(width, 8, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bufferedImage = new BufferedImage(width, 12, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = bufferedImage.createGraphics();
         int x = 0;
-        for (BufferedImage image : images) {
-            if (image == null) {
+        for (Symbol symbol : symbols) {
+            if (symbol == null) {
                 x += font.getSpaceSize();
                 continue;
             }
-            g2d.drawImage(image, x, 0, null);
-            x += image.getWidth() + 1;
+            int y = 12 - symbol.getImage().getHeight() + (symbol.getImage().getHeight() - symbol.getAscent() - 1);
+            g2d.drawImage(symbol.getImage(), x, y, null);
+            x += symbol.getWidth() + 1;
         }
         g2d.dispose();
         return bufferedImage;

@@ -14,9 +14,9 @@ public class Font {
     public static final Gson GSON = new GsonBuilder().create();
 
     private final int spaceSize;
-    private final Map<Character, BufferedImage> symbols;
+    private final Map<Character, Symbol> symbols;
 
-    public Font(int spaceSize, @NotNull Map<Character, BufferedImage> symbols) {
+    public Font(int spaceSize, @NotNull Map<Character, Symbol> symbols) {
         this.spaceSize = spaceSize;
         this.symbols = new HashMap<>(symbols);
     }
@@ -25,7 +25,7 @@ public class Font {
         return spaceSize;
     }
 
-    public Map<Character, BufferedImage> getSymbols() {
+    public Map<Character, Symbol> getSymbols() {
         return symbols;
     }
 
@@ -34,7 +34,7 @@ public class Font {
         JsonArray providers = jsonObject.getAsJsonArray("providers");
 
         int spaceSize = 4;
-        Map<Character, BufferedImage> symbols = new HashMap<>();
+        Map<Character, Symbol> symbols = new HashMap<>();
 
         for (JsonElement providerElement : providers) {
             JsonObject providerJson = providerElement.getAsJsonObject();
@@ -49,32 +49,33 @@ public class Font {
                     path = path.substring("minecraft:font/".length());
                 }
                 int ascent = providerJson.get("ascent").getAsInt();
-                if (ascent != 7) continue;
                 JsonArray charsArray = providerJson.getAsJsonArray("chars");
                 int columns = charsArray.get(0).getAsString().length();
                 int rows = charsArray.size();
                 File file = new File(path);
-                BufferedImage bufferedImage;
+                BufferedImage bitmapImage;
                 try {
-                    bufferedImage = ImageIO.read(file);
+                    bitmapImage = ImageIO.read(file);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                int subImageWidth = bufferedImage.getWidth() / columns;
-                int subImageHeight = bufferedImage.getHeight() / rows;
+                int subImageWidth = bitmapImage.getWidth() / columns;
+                int subImageHeight = bitmapImage.getHeight() / rows;
 
                 for (int row = 0; row < rows; row++) {
                     for (int col = 0; col < columns; col++) {
                         String rowString = charsArray.get(row).getAsString();
 
-                        char symbol = rowString.charAt(col);
+                        char character = rowString.charAt(col);
 
                         int x = col * subImageWidth;
                         int y = row * subImageHeight;
-                        BufferedImage charImage = bufferedImage.getSubimage(x, y, subImageWidth, subImageHeight);
-                        charImage = clipRightEmptyPart(charImage);
+                        BufferedImage image = bitmapImage.getSubimage(x, y, subImageWidth, subImageHeight);
+                        image = clipRightEmptyPart(image);
 
-                        symbols.put(symbol, charImage);
+                        Symbol symbol = new Symbol(character, ascent, image);
+
+                        symbols.put(symbol.getCharacter(), symbol);
                     }
                 }
             }
